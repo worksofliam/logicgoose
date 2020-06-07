@@ -10,7 +10,7 @@ Dcl-Ds Results Qualified Dim(1);
   Result int(10);
 End-ds;
 
-Results(1).result = numa * numb;
+Results(1).result = numa + numb;
 
 Exec SQL Set Result Sets Array :Results For 1 Rows;
 
