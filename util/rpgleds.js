@@ -55,7 +55,13 @@ module.exports = class rpgleDS {
           }
           break;
         case 'undefined':
-          if (subfield.decimals == undefined)
+          if (subfield.type)
+            if (subfield.dim)
+              currentValue = subfield.type.toBufferArray([], subfield.dim);
+            else
+              currentValue = subfield.type.toBuffer({});
+
+          else if (subfield.decimals == undefined)
             currentValue = ''.padEnd(subfield.length, ' ');
           else
             currentValue = ''.padEnd(subfield.length, '0');
@@ -65,7 +71,7 @@ module.exports = class rpgleDS {
 
         case 'string':
           if (currentValue.length > subfield.length)
-            currentValue.substr(0, subfield.length);
+            currentValue = currentValue.substr(0, subfield.length);
           else
             currentValue = currentValue.padEnd(subfield.length, ' ');
 
@@ -76,7 +82,7 @@ module.exports = class rpgleDS {
           if (currentValue < 0) {
             console.error('No support for negative numbers in rpgleDS: ' + subfield.name);
           } else {
-            currentValue = String(currentValue);
+            currentValue = currentValue.toFixed(subfield.decimals);
             currentValue = currentValue.replace(".", "");
             if (currentValue.length <= subfield.length) {
               currentValue = currentValue.padStart(subfield.length, '0');
@@ -96,20 +102,39 @@ module.exports = class rpgleDS {
   fromBuffer(string) {
     var outObject = {};
     var index = 0;
+    var size;
 
     /** @type {String} */
     var currentString;
 
     for (const subfield of this.subfields) {
-      currentString = string.substr(index, subfield.length);
 
       if (subfield.type === undefined) {
+        currentString = string.substr(index, subfield.length);
+
         if (subfield.decimals === undefined) {
           //Is a string
           outObject[subfield.name] = currentString.trim();
         } else {
+
+          //This snippet of code determines whether the number is negative or not.
+          var isNegative = false;
+          //The last byte in the buffer determines if it is negative or not.
+          const charNum = currentString.charCodeAt(currentString.length-1);
+          //If it's in this character range, it's a negative number.
+          if (charNum >= 74 && charNum <= 83) {
+            //All we have to do is subtract 25 from the character code to get the true number..
+            currentString = currentString.substr(0, currentString.length-1) + String.fromCharCode(charNum-25);
+            //..then we tell the program it's a negative number.
+            isNegative = true;
+          }
+
+          const start = currentString.substr(0, subfield.length-subfield.decimals);
+          const end = currentString.substr(subfield.length-subfield.decimals);
+
           //Is a number
-          currentString = currentString.substr(0, subfield.length-subfield.decimals) + '.' + currentString.substr(subfield.length-subfield.decimals);
+          currentString = (isNegative ? '-' : '') + start + '.' + end;
+
           outObject[subfield.name] = Number(currentString);
         }
 
@@ -126,11 +151,16 @@ module.exports = class rpgleDS {
         
         index += subfield.length;
       } else {
+        size = subfield.type.getSize() * (subfield.dim || 1);
+        currentString = string.substr(index, size);
+
         if (subfield.dim) {
           outObject[subfield.name] = subfield.type.fromBufferArray(currentString, subfield.dim);
         } else {
           outObject[subfield.name] = subfield.type.fromBuffer(currentString);
         }
+
+        index += size;
       }
     }
 
