@@ -7,7 +7,7 @@ module.exports = class rpgleDS {
     this.subfields = subfields || [];
 
     //We need to look for objects which are subfields and convert this to this class
-    for (let index of this.subfields) {
+    for (let index in this.subfields) {
       if (this.subfields[index].type)
         if (typeof this.subfields[index].type === "object")
           this.subfields[index].type = new rpgleDS(this.subfields[index].type);
@@ -65,6 +65,7 @@ module.exports = class rpgleDS {
             outString += subfield.type.toBufferArray(currentValue, subfield.dim);
           }
           break;
+
         case 'undefined':
           if (subfield.type)
             if (subfield.dim)
@@ -78,6 +79,10 @@ module.exports = class rpgleDS {
             currentValue = ''.padEnd(subfield.length, '0');
           
           outString += currentValue;
+          break;
+
+        case 'boolean':
+          outString += (currentValue === true ? '1' : '0');
           break;
 
         case 'string':
@@ -126,6 +131,14 @@ module.exports = class rpgleDS {
         if (subfield.decimals === undefined) {
           //Is a string
           outObject[subfield.name] = currentString.trim();
+          
+          //Oh.. it might be an indicator??
+          if (subfield.length === 1) {
+            switch (outObject[subfield.name]) {
+              case '1': outObject[subfield.name] = true; break;
+              case '0': outObject[subfield.name] = false; break;
+            }
+          }
         } else {
 
           //This snippet of code determines whether the number is negative or not.
