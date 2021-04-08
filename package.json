@@ -6,7 +6,6 @@
   "dependencies": {
   },
   "devDependencies": {
-    "odbc": "^2.3.0"
   },
   "scripts": {
     "test": "node test.js"
