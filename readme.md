@@ -1,36 +1,188 @@
-## logicgoose
+# logicgoose
 
-A simple library based to generate a valid SQL statement to call and return relational data from SQL ILE programs.
+A simple class that will construct and deconstruct buffers (which is actually just a single) to be passed into an ILE program. This is particularly useful when it comes to working with data structures.
 
-logicgoose will handle the data types being passed into your program. Your SQL ILE program needs to use a certain SQL statement to return data.
+Don't fancy writing all this code manually? [Check out this nifty tool to do it for you](https://node-rpgle-api.herokuapp.com/)!
 
-You are required to pass in a function that logicgoose can run SQL statements with that will also allow it to pass in binding parameters. You only need to set this once. This also means you will need to use your own database connections (like ODBC or idb-connector/pconnector)
+## Example
 
 ```js
-const {options} = require('./index.js');
-options.executeStatement = function(statementString, parametersArray) {...}
+const inputDS = new rpgleDS(...);
+const responseDS = new rpgleDS(...);
+
+static async getHistoryHeader(header) {
+  console.log(inputDS.getSize());
+  console.log(responseDS.getSize());
+
+  const inBuffer = inputDS.toBuffer(header);
+
+  const results = await db2.callProcedure(SCHEMA, 'PROGRAM', [inBuffer, undefined]);
+
+  return responseDS.fromBuffer(results.parameters[1]);
+}
 ```
 
-### Example
+## JS Types and ILE Types
 
-In RPG:
+| JS Type | ILE Type |
+|-|-|
+| String | Char |
+| Number | Zoned |
+| Boolean | Char(1) / Ind |
+
+### Simple types example
+
+```json
+{
+  "name": "25",
+  "number": 25
+}
+```
+
+```js
+const base = new rpgleDS(
+[
+    {
+        "name": "name",
+        "length": 25
+    },
+    {
+        "name": "number",
+        "length": 11,
+        "decimals": 2
+    }
+]
+);
+```
 
 ```rpgle
-Dcl-S rowCount Int(5);
-
-Dcl-Ds outputRows Dim(50) Qualified;
-  id Like(Department.DEPTNO);
-  name Like(Department.DEPTNAME);
+Dcl-Ds base Qualified Template;
+  name Char(25);
+  number Zoned(11:2);
 End-Ds;
+```
 
-LoadSubfile();
+## Many dimentions
 
-EXEC SQL SET RESULT SETS ARRAY :outputRows for :rowCounts ROWS;
+The class can easily handle many levels of structs (`likeds(x) qualified`).
+
+```json
+{
+  "name": "25",
+  "number": 25,
+  "substructA": {
+    "a": "10",
+    "b": 10
+  }
+}
 ```
 
 ```js
-const {Program} = require('./index.js');
+const substructA = new rpgleDS(
+[
+    {
+        "name": "a",
+        "length": 10
+    },
+    {
+        "name": "b",
+        "length": 11,
+        "decimals": 2
+    }
+]
+);
 
-const myProgram = new Program("barry", "depts_web");
-console.log(await myProgram.call());
+const base = new rpgleDS(
+[
+    {
+        "name": "name",
+        "length": 25
+    },
+    {
+        "name": "number",
+        "length": 11,
+        "decimals": 2
+    },
+    {
+        "name": "substructA",
+        "like": substructA
+    }
+]
+);
+```
+
+```rpgle
+Dcl-Ds substructA Qualified Template;
+  a Char(10);
+  b Zoned(11:2);
+End-Ds;
+
+Dcl-Ds base Qualified Template;
+  name Char(25);
+  number Zoned(11:2);
+  substructA LikeDS(substructA);
+End-Ds;
+```
+
+## Struct arrays
+
+We also support substructs that are arrays.
+
+```json
+{
+  "name": "25",
+  "number": 25,
+  "substructA": [{
+    "a": "10",
+    "b": 10
+  }]
+}
+```
+
+```js
+const substructA = new rpgleDS(
+[
+    {
+        "name": "a",
+        "length": 10
+    },
+    {
+        "name": "b",
+        "length": 11,
+        "decimals": 2
+    }
+]
+);
+
+const base = new rpgleDS(
+[
+    {
+        "name": "name",
+        "length": 25
+    },
+    {
+        "name": "number",
+        "length": 11,
+        "decimals": 2
+    },
+    {
+        "name": "substructA",
+        "like": substructA,
+        "dim": 5
+    }
+]
+);
+```
+
+```rpgle
+Dcl-Ds substructA Qualified Template;
+  a Char(10);
+  b Zoned(11:2);
+End-Ds;
+
+Dcl-Ds base Qualified Template;
+  name Char(25);
+  number Zoned(11:2);
+  substructA LikeDS(substructA) Dim(5);
+End-Ds;
 ```
