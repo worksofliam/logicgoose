@@ -4,10 +4,11 @@ module.exports = class rpgleDS {
    * @param {{name: string, length: number, decimals?: number, type?: rpgleDS|object, dim?: number}[]} subfields 
    */
   constructor(subfields) {
-    this.subfields = subfields || [];
+    this.subfields = [...subfields] || [];
 
     //We need to look for objects which are subfields and convert this to this class
     for (let index in this.subfields) {
+      this.subfields[index] = {...this.subfields[index]}; //Make a clone
       if (this.subfields[index].type)
         if (typeof this.subfields[index].type === "object")
           this.subfields[index].type = new rpgleDS(this.subfields[index].type);
@@ -45,6 +46,7 @@ module.exports = class rpgleDS {
   }
 
   toBufferArray(array, amount = 0) {
+    if (array.length > amount) array = array.slice(0, amount);
     for (var i = array.length; i < amount; i++) array.push({});
 
     return array.map(obj => this.toBuffer(obj)).join('');
@@ -96,7 +98,25 @@ module.exports = class rpgleDS {
 
         case 'number':
           if (currentValue < 0) {
-            console.error('No support for negative numbers in rpgleDS: ' + subfield.name);
+            //console.error('No support for negative numbers in rpgleDS: ' + subfield.name);
+            currentValue = currentValue.toFixed(subfield.decimals);
+            currentValue = currentValue.substr(1); //Remove the -
+            currentValue = currentValue.replace(".", "");
+
+            if (currentValue.length <= subfield.length) {
+              currentValue = currentValue.padStart(subfield.length, '0');
+
+              if (currentValue[currentValue.length-1] === '0') {
+                //0 for some reason is totally off the chart?;
+                outString += currentValue.substr(0, currentValue.length-1) + String.fromCharCode(125);
+              } else {
+                //Otherwise.. 1-9 is simply + 25
+                outString += currentValue.substr(0, currentValue.length-1) + String.fromCharCode(currentValue.charCodeAt(currentValue.length-1)+25);
+              }
+            } else {
+              throw new Error(`Number ${currentValue} too big for subfield: ${subfield.name}`);
+            }
+
           } else {
             currentValue = currentValue.toFixed(subfield.decimals);
             currentValue = currentValue.replace(".", "");
@@ -104,7 +124,7 @@ module.exports = class rpgleDS {
               currentValue = currentValue.padStart(subfield.length, '0');
               outString += currentValue;
             } else {
-              console.error(`Number ${currentValue} too big for subfield: ${subfield.name}`);
+              throw new Error(`Number ${currentValue} too big for subfield: ${subfield.name}`);
             }
           }
           break;
@@ -149,6 +169,13 @@ module.exports = class rpgleDS {
           if (charNum >= 74 && charNum <= 83) {
             //All we have to do is subtract 25 from the character code to get the true number..
             currentString = currentString.substr(0, currentString.length-1) + String.fromCharCode(charNum-25);
+            //..then we tell the program it's a negative number.
+            isNegative = true;
+
+          } else if (charNum === 125) {
+            //Is 0 but negative
+
+            currentString = currentString.substr(0, currentString.length-1) + "0";
             //..then we tell the program it's a negative number.
             isNegative = true;
           }
