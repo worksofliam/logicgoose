@@ -66,7 +66,3 @@ const test: ProcedureCallInfo = {
     { name: `d`, length: 1 }
   ]
 };
-
-const goose = new LogicGoose({executor: async (a, b) => {return `result`}});
-const fn = goose.getCaller(test);
-await fn({})

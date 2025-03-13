@@ -1,15 +1,33 @@
 {
   "name": "logicgoose",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "dependencies": {
+  "description": "Tools to call RPGLE programs",
+  "bin": {
+    "so": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/src/index.d.ts",
+  "scripts": {
+    "test": "vitest",
+    "webpack:dev": "webpack --mode none --config ./webpack.config.js",
+    "webpack": "webpack --mode production --config ./webpack.config.js",
+    "local": "npm run webpack:dev && npm i -g",
+    "deploy": "npm run webpack && npm i && npm publish --access public"
+  },
+  "keywords": [
+    "ibmi",
+    "iseries",
+    "as400"
+  ],
+  "repository": {
+    "url": "https://github.com/worksofliam/logicgoose"
   },
   "devDependencies": {
-  },
-  "scripts": {
-    "test": "node test.js"
-  },
-  "author": "",
-  "license": "ISC"
+    "merge-options": "^3.0.4",
+    "ts-loader": "^9.4.4",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.8",
+    "webpack": "^5.24.3",
+    "webpack-cli": "^4.5.0"
+  }
 }
