@@ -4,7 +4,11 @@ End-to-end tool for calling RPGLE programs from Node.js with Mapepire or ODBC.
 
 The user uses a simple JSON schema to define the input and output of the RPGLE program. The tool generates the TypeScript interfaces and the TS/Node.js code to call the RPGLE program. Logicgoose can also generates the RPGLE code to handle the input and output, as well as the SQL procedure code to call the program.
 
-**What is the point of this?** Right now, Node.js doesn't have a simple way of calling RPGLE programs, other than itoolkit, which has a dependency of having something setup on the server (XMLSERVICE). While Logicgoose does require a procedure in the middle to call the program, all of the work to generate those procedures and code to call them is generated for you. This means that the RPGLE program can be called from any Node.js app without having to write the boilerplate code to call it.
+### What's the point?
+
+Right now, Node.js doesn't have a simple way of calling RPGLE programs, other than itoolkit, which has a dependency of having something setup on the server (XMLSERVICE). While Logicgoose does require a procedure in the middle to call the program, all of the work to generate those procedures and code to call them is generated for you. This means that the RPGLE program can be called from any Node.js app without having to write the boilerplate code to call it. Secondly, is type-safety in building applications.
+
+Logicgoose ensures the input and output types are correct and we do this because we generate all the type defintions for you in the generated TypeScript code.
 
 ### Installation
 
@@ -48,7 +52,7 @@ Now run Logicgoose again and it will generate new files in the `src` folder base
 npm run logicgoose
 ```
 
-By default, it will generate:
+By default, it will generate a folder that has:
 
 * RPGLE source code to show what the input and output parameters need to be based on the configuration.
 * SQL procedure code to call the RPGLE program.
@@ -98,6 +102,7 @@ Logicgoose only supports the following RPGLE types to simply match up with some 
 | `char` | `string` | Fixed length string. Strings will be trimmed to fit the size |
 | `zoned` | `number` |  |
 | `ind` | `boolean` | Booleans are a single byte in RPGLE |
+| `data structure` | `object` | Multi-dimention arrays are supported! |
 
 ```mermaid
 flowchart
@@ -121,4 +126,6 @@ flowchart
 * Maybe support COBOL
 * Right now library/schema is hardcoded in the `logicgoose.json` file. It should be possible to delegate to a environment variable for the library.
 * Look into `varchar` support
+* Test cases with vitest
+* Use json schema for `.logicgoose` validation
 * Release on npm
