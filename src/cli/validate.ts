@@ -1,3 +1,5 @@
+//TODO: replace with json schema
+
 import { ILEPrimitive, LGFile, ProcedureCallInfo } from "../types";
 
 export function validateLGFile(obj: Partial<LGFile>) {
