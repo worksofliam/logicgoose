@@ -20,9 +20,9 @@ export class LogicGoose {
       
       // TODO: call procedure
 
-      const sql = `call ${procedure.procedureLibrary}.${procedure.procedureName} (${inBuff})`;
+      const sql = `call ${procedure.procedureLibrary}.${procedure.procedureName} (?, ?)`;
 
-      const result = await this.config.executor(sql, [inBuff]);
+      const result = await this.config.executor(sql, [inBuff, '']);
 
       if (result) {
         const outObject = ILEBuffer.fromBuffer(output, result);

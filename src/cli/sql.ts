@@ -10,7 +10,7 @@ export function generateSqlCreate(callTo: ProcedureCallInfo) {
     `  OUT outBuffer CHAR(${outSize})`,
     `)`,
     `LANGUAGE RPGLE`, // TODO: maybe it's not RPGLE?
-    `EXTERNAL NAME LIB.PROGRAM GENERAL;`,
+    `EXTERNAL NAME ${callTo.programLibrary}/${callTo.procedureName} GENERAL;`,
   ]
 
   return lines.join(`\n`);
