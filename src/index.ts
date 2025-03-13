@@ -10,14 +10,15 @@ import { generateSqlCreate } from "./cli/sql";
 import { generateRpgleFor } from "./cli/rpgle";
 
 const LG_FILE = `.logicgoose`;
-const isCli = process.argv.length >= 2 && (process.argv[1].endsWith(`so`) || process.argv[1].endsWith(`index.js`));
+const isCli = process.argv.length >= 2 && (process.argv[1].endsWith(`so`) || process.argv[1].endsWith(`index.js`) || process.argv[1].endsWith(`logicgoose`));
 
 if (isCli || process.env.VSCODE_INSPECTOR_OPTIONS) {
 	main();
 }
 
 async function main() {
-
+  console.log(`Thanks for using Logicgoose.`);
+  
   const parms = process.argv.slice(2);
   let cwd = process.cwd();
 

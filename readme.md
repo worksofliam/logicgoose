@@ -1,188 +1,118 @@
 # logicgoose
 
-A simple class that will construct and deconstruct buffers (which is actually just a single) to be passed into an ILE program. This is particularly useful when it comes to working with data structures.
+End-to-end tool for calling RPGLE programs from Node.js with Mapepire or ODBC.
 
-Don't fancy writing all this code manually? [Check out this nifty tool to do it for you](https://node-rpgle-api.herokuapp.com/)!
+<div style="max-width: 40%">
 
-## Example
+```mermaid
+flowchart
+    A[Node.js] --> B
+    B[Logicgoose] --> C
+    C[Database driver] --> D
+    D[SQL procedure] --> E
+    E[RPGLE program]
 
-```js
-const inputDS = new rpgleDS(...);
-const responseDS = new rpgleDS(...);
-
-static async getHistoryHeader(header) {
-  console.log(inputDS.getSize());
-  console.log(responseDS.getSize());
-
-  const inBuffer = inputDS.toBuffer(header);
-
-  const results = await db2.callProcedure(SCHEMA, 'PROGRAM', [inBuffer, undefined]);
-
-  return responseDS.fromBuffer(results.parameters[1]);
-}
+    F[Logicgoose CLI] --> G
+    G[.logicgoose config]
+    G--Generated files---B
+    G--Generated procedures--->D
+    G--Generated example programs--->E
 ```
 
-## JS Types and ILE Types
+</div>
 
-| JS Type | ILE Type |
-|-|-|
-| String | Char |
-| Number | Zoned |
-| Boolean | Char(1) / Ind |
+The user uses a simple JSON schema to define the input and output of the RPGLE program. The tool generates the TypeScript interfaces and the TS/Node.js code to call the RPGLE program. Logicgoose can also generates the RPGLE code to handle the input and output, as well as the SQL procedure code to call the program.
 
-### Simple types example
+Logicgoose only supports the following RPGLE types to simply match up with some of JavaScript's primitives:
+
+| RPGLE Type | JavaScript Type | Description |
+|--|-|--|
+| `char` | `string` | Fixed length string. Strings will be trimmed to fit the size |
+| `zoned` | `number` |  |
+| `ind` | `boolean` | Booleans are a single byte in RPGLE |
+
+### Installation
+
+**Not yet published**
+
+Install from npm:
+
+```bash
+npm install logicgoose
+```
+
+Do not install globally with `-g`.
+
+Add a script to your `package.json` to run the CLI:
 
 ```json
-{
-  "name": "25",
-  "number": 25
+"scripts": {
+  "logicgoose": "logicgoose"
 }
 ```
 
-```js
-const base = new rpgleDS(
-[
-    {
-        "name": "name",
-        "length": 25
-    },
-    {
-        "name": "number",
-        "length": 11,
-        "decimals": 2
+### First time project setup
+
+<details>
+
+<summary>Click to expand</summary>
+
+*This assumes an existing Node.js/TS app is being developed.*
+
+Run the CLI to generate the configuration file:
+
+```bash
+npm run logicgoose -- --sample
+```
+
+This will create a `logicgoose.json` file in the root of your project. This file is used to define the programs that will be callable.
+
+Now run Logicgoose again and it will generate new files in the `src` folder based on the configuration:
+
+```bash
+npm run logicgoose
+```
+
+By default, it will generate:
+
+* RPGLE source code to show what the input and output parameters need to be based on the configuration.
+* SQL procedure code to call the RPGLE program.
+
+**Both the SQL procedure and RPGLE programs need to exist before they can be called**.
+
+For the TypeScript project it generates two things:
+
+* `SystemCalls` interface which is an object with all of the functions that are callable to the RPGLE programs.
+* `setupLgCallers` function which builds the functions dynamically based on the connection.
+
+To use the programs, you need to tell Logicgoose how to call the programs. This is where Mapepire or ODBC comes in. Create an instance of `LogicGoose` where the constructor has an `executor` callback after connecting to your database. The result must be the second parameter of the in/out parameters:
+
+```ts
+db.connect(DatabaseServer).then(() => {
+  const lg = new LogicGoose({
+    async executor(sql, parms) {
+      const result = await db.query(sql, parms);
+      if (result && result.output_parms && result.output_parms.length === 2) {
+        const buffOut = result.output_parms[1].value;
+        return buffOut
+      }
+
+      return undefined;
     }
-]
-);
+  })
+
+  setSystemCalls(setupLgCallers(lg));
+
+  app.listen(port);
+});
 ```
 
-```rpgle
-Dcl-Ds base Qualified Template;
-  name Char(25);
-  number Zoned(11:2);
-End-Ds;
-```
+Here `setSystemCalls` is custom to this project. It is used to store the calling functions so they can be used elsewhere in the app.
 
-## Many dimentions
+</details>
 
-The class can easily handle many levels of structs (`likeds(x) qualified`).
+### To do:
 
-```json
-{
-  "name": "25",
-  "number": 25,
-  "substructA": {
-    "a": "10",
-    "b": 10
-  }
-}
-```
-
-```js
-const substructA = new rpgleDS(
-[
-    {
-        "name": "a",
-        "length": 10
-    },
-    {
-        "name": "b",
-        "length": 11,
-        "decimals": 2
-    }
-]
-);
-
-const base = new rpgleDS(
-[
-    {
-        "name": "name",
-        "length": 25
-    },
-    {
-        "name": "number",
-        "length": 11,
-        "decimals": 2
-    },
-    {
-        "name": "substructA",
-        "like": substructA
-    }
-]
-);
-```
-
-```rpgle
-Dcl-Ds substructA Qualified Template;
-  a Char(10);
-  b Zoned(11:2);
-End-Ds;
-
-Dcl-Ds base Qualified Template;
-  name Char(25);
-  number Zoned(11:2);
-  substructA LikeDS(substructA);
-End-Ds;
-```
-
-## Struct arrays
-
-We also support substructs that are arrays.
-
-```json
-{
-  "name": "25",
-  "number": 25,
-  "substructA": [{
-    "a": "10",
-    "b": 10
-  }]
-}
-```
-
-```js
-const substructA = new rpgleDS(
-[
-    {
-        "name": "a",
-        "length": 10
-    },
-    {
-        "name": "b",
-        "length": 11,
-        "decimals": 2
-    }
-]
-);
-
-const base = new rpgleDS(
-[
-    {
-        "name": "name",
-        "length": 25
-    },
-    {
-        "name": "number",
-        "length": 11,
-        "decimals": 2
-    },
-    {
-        "name": "substructA",
-        "like": substructA,
-        "dim": 5
-    }
-]
-);
-```
-
-```rpgle
-Dcl-Ds substructA Qualified Template;
-  a Char(10);
-  b Zoned(11:2);
-End-Ds;
-
-Dcl-Ds base Qualified Template;
-  name Char(25);
-  number Zoned(11:2);
-  substructA LikeDS(substructA) Dim(5);
-End-Ds;
-```
+* Maybe support COBOL
+* Right now library/schema is hardcoded in the `logicgoose.json` file. It should be possible to delegate to a environment variable for the library.
+* Look into `varchar` support
