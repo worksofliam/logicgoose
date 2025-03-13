@@ -2,38 +2,11 @@
 
 End-to-end tool for calling RPGLE programs from Node.js with Mapepire or ODBC.
 
-<div style="max-width: 40%">
-
-```mermaid
-flowchart
-    A[Node.js] --> B
-    B[Logicgoose] --> C
-    C[Database driver] --> D
-    D[SQL procedure] --> E
-    E[RPGLE program]
-
-    F[Logicgoose CLI] --> G
-    G[.logicgoose config]
-    G--Generated files---B
-    G--Generated procedures--->D
-    G--Generated example programs--->E
-```
-
-</div>
-
 The user uses a simple JSON schema to define the input and output of the RPGLE program. The tool generates the TypeScript interfaces and the TS/Node.js code to call the RPGLE program. Logicgoose can also generates the RPGLE code to handle the input and output, as well as the SQL procedure code to call the program.
-
-Logicgoose only supports the following RPGLE types to simply match up with some of JavaScript's primitives:
-
-| RPGLE Type | JavaScript Type | Description |
-|--|-|--|
-| `char` | `string` | Fixed length string. Strings will be trimmed to fit the size |
-| `zoned` | `number` |  |
-| `ind` | `boolean` | Booleans are a single byte in RPGLE |
 
 ### Installation
 
-**Not yet published**
+*Not yet published.*
 
 Install from npm:
 
@@ -111,8 +84,39 @@ Here `setSystemCalls` is custom to this project. It is used to store the calling
 
 </details>
 
+### Some technical details
+
+<details>
+    <summary>See more</summary>
+
+Logicgoose only supports the following RPGLE types to simply match up with some of JavaScript's primitives:
+
+| RPGLE Type | JavaScript Type | Description |
+|--|-|--|
+| `char` | `string` | Fixed length string. Strings will be trimmed to fit the size |
+| `zoned` | `number` |  |
+| `ind` | `boolean` | Booleans are a single byte in RPGLE |
+
+```mermaid
+flowchart
+    A[Node.js] --> B
+    B[Logicgoose] --> C
+    C[Database driver] --> D
+    D[SQL procedure] --> E
+    E[RPGLE program]
+
+    F[Logicgoose CLI] --> G
+    G[.logicgoose config]
+    G--Generated files---B
+    G--Generated procedures--->D
+    G--Generated example programs--->E
+```
+
+</details>
+
 ### To do:
 
 * Maybe support COBOL
 * Right now library/schema is hardcoded in the `logicgoose.json` file. It should be possible to delegate to a environment variable for the library.
 * Look into `varchar` support
+* Release on npm
