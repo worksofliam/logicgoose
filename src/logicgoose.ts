@@ -35,34 +35,4 @@ export class LogicGoose {
 
     return caller;
   }
-
-  private static generateSqlCreate(callTo: ProcedureCallInfo) {
-    let inSize = ILEBuffer.determineSize(callTo.bufferIn);
-    let outSize = ILEBuffer.determineSize(callTo.bufferOut);
-    const lines = [
-      `create or replace procedure ${callTo.procedureLibrary}.${callTo.procedureName} (`,
-      `  IN inBuffer CHAR(${inSize}),`,
-      `  OUT outBuffer CHAR(${outSize})`,
-      `)`,
-      `LANGUAGE RPGLE`, // TODO: maybe it's not RPGLE?
-      `EXTERNAL NAME LIB.PROGRAM GENERAL;`
-    ]
-
-    return lines.join(`\n`);
-  }
 }
-
-const test: ProcedureCallInfo = {
-  programName: `abc`,
-  programLibrary: `lib`,
-  procedureName: `test`,
-  procedureLibrary: `lib`,
-  bufferIn: [
-    { name: `a`, length: 1 },
-    { name: `b`, length: 1 },
-    { name: `c`, length: 1 }
-  ],
-  bufferOut: [
-    { name: `d`, length: 1 }
-  ]
-};

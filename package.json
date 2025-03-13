@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Tools to call RPGLE programs",
   "bin": {
-    "so": "./dist/index.js"
+    "logicgoose": "./dist/index.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/src/index.d.ts",
@@ -29,5 +29,8 @@
     "vitest": "^3.0.8",
     "webpack": "^5.24.3",
     "webpack-cli": "^4.5.0"
+  },
+  "dependencies": {
+    "json5": "^2.2.3"
   }
 }

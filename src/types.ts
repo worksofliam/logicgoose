@@ -28,3 +28,12 @@ export interface ILEStruct extends ILEStructBase {
   like: ILEPrimitive[];
   dim?: number;
 }
+
+export interface LGFile {
+  generateIn?: string;
+  callers?: ProcedureCallInfo[];
+  generateCaller?: boolean;
+  generateTypes?: boolean;
+  generateSql?: boolean;
+  generateRpgle?: boolean;
+}

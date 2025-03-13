@@ -11,7 +11,7 @@
 			"cwd": "${workspaceFolder}",
 			"program": "${workspaceFolder}/dist/index.js",
 			"sourceMaps": true,
-			"args": [],
+			"args": ["--cwd", "/Users/barry/Downloads/nodejs-ibmi-app"],
 			"preLaunchTask": {
 				"type": "npm",
 				"script": "webpack:dev"
