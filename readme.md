@@ -4,6 +4,8 @@ End-to-end tool for calling RPGLE programs from Node.js with Mapepire or ODBC.
 
 The user uses a simple JSON schema to define the input and output of the RPGLE program. The tool generates the TypeScript interfaces and the TS/Node.js code to call the RPGLE program. Logicgoose can also generates the RPGLE code to handle the input and output, as well as the SQL procedure code to call the program.
 
+---
+
 ### What's the point?
 
 Right now, Node.js doesn't have a simple way of calling RPGLE programs, other than itoolkit, which has a dependency of having something setup on the server (XMLSERVICE). While Logicgoose does require a procedure in the middle to call the program, all of the work to generate those procedures and code to call them is generated for you. This means that the RPGLE program can be called from any Node.js app without having to write the boilerplate code to call it. Secondly, is type-safety in building applications.
@@ -71,6 +73,8 @@ return;
 
 </details>
 
+---
+
 ### Installation
 
 *Not yet published.*
@@ -90,6 +94,8 @@ Add a script to your `package.json` to run the CLI:
   "logicgoose": "logicgoose"
 }
 ```
+
+---
 
 ### First time project setup
 
@@ -151,6 +157,8 @@ Here `setSystemCalls` is custom to this project. It is used to store the calling
 
 </details>
 
+---
+
 ### Some technical details
 
 <details>
@@ -182,6 +190,8 @@ flowchart
 
 </details>
 
+---
+
 ### To do:
 
 * Maybe support COBOL
@@ -190,3 +200,4 @@ flowchart
 * Test cases with vitest
 * Use json schema for `.logicgoose` validation
 * Release on npm
+* Split up readme into wiki
