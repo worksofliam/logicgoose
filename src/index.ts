@@ -88,7 +88,7 @@ async function main() {
     if (settings.generateRpgle) {
       for (const caller of settings.callers) {
         const rpgle = generateRpgleFor(caller);
-        writeFile(rpgle, `callers`, `${caller.procedureName}.rpgle`);
+        writeFile(rpgle, `callers`, `${caller.programName}.rpgle`);
       }
     }
   }

@@ -67,7 +67,11 @@ function getRpgleType(prim: ILEPrimitive) {
     if ('decimals' in prim) {
       return `zoned(${prim.length}:${prim.decimals})`;
     } else {
-      return `char(${prim.length})`;
+      if (prim.length === 1) {
+        return `ind`
+      } else {
+        return `char(${prim.length})`;
+      }
     }
   }
 
