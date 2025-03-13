@@ -7,6 +7,7 @@ import { generateTypesForCaller } from "./cli/types";
 import { SAMPLE_LG_FILE } from "./cli/sample";
 import { generateCallersFor } from "./cli/callers";
 import { generateSqlCreate } from "./cli/sql";
+import { generateRpgleFor } from "./cli/rpgle";
 
 const LG_FILE = `.logicgoose`;
 const isCli = process.argv.length >= 2 && (process.argv[1].endsWith(`so`) || process.argv[1].endsWith(`index.js`));
@@ -52,44 +53,43 @@ async function main() {
     process.exit(1);
   }
 
-  const outDir = path.join(cwd, settings.generateIn || `.`, `logicgoose`);
-  let hasMadeDir = false;
+  const baseOutDir = path.join(cwd, settings.generateIn || `.`, `logicgoose`);
   let hasWritten = false;
 
-  const writeFile = (file: string, content: string) => {
-    if (!hasMadeDir) {
-      hasMadeDir = true;
-      mkdirSync(outDir, { recursive: true });
-    }
-
-    const filePath = path.join(outDir, file);
+  const writeFile = (content: string, ...remainingPath: string[]) => {
+    const filePath = path.join(baseOutDir, ...remainingPath);
+    mkdirSync(path.parse(filePath).dir, { recursive: true });
     writeFileSync(filePath, content, { encoding: `utf8` });
 
     if (!hasWritten) {
       hasWritten = true;
-      writeFile(`.gitignore`, `*.*`);
+      writeFile(`*.*`, `.gitignore`);
+      writeFile(`**/**`, `.gitignore`);
     }
   }
 
   if (settings.callers) {
     if (settings.generateCaller) {
       const callerCode = generateCallersFor(settings.callers);
-      writeFile(`callers.ts`, callerCode);
+      writeFile(callerCode, `callers.ts`);
     }
 
     if (settings.generateTypes) {
       const newTypes = settings.callers.map(c => generateTypesForCaller(c)).join(`\n`);
 
-      writeFile(`types.ts`, newTypes);
+      writeFile(newTypes, `types.ts`);
     }
 
     if (settings.generateSql) {
       const sql = settings.callers.map(c => generateSqlCreate(c)).join(`\n\n`);
-      writeFile(`callers.sql`, sql);
+      writeFile(sql, `callers.sql`);
     }
 
     if (settings.generateRpgle) {
-      console.warn(`generateRpgle is not yet implemented.`);
+      for (const caller of settings.callers) {
+        const rpgle = generateRpgleFor(caller);
+        writeFile(rpgle, `callers`, `${caller.procedureName}.rpgle`);
+      }
     }
   }
 }
