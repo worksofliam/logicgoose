@@ -2,6 +2,11 @@
 
 End-to-end tool for calling RPGLE programs from Node.js with Mapepire or ODBC.
 
+Logicgoose is two things:
+
+1. A CLI tool to generate the boilerplate code to call RPGLE programs from Node.js.
+2. A TypeScript library to call the generated code from the CLI.
+
 The user uses a simple JSON schema to define the input and output of the RPGLE program. The tool generates the TypeScript interfaces and the TS/Node.js code to call the RPGLE program. Logicgoose can also generates the RPGLE code to handle the input and output, as well as the SQL procedure code to call the program.
 
 ---
