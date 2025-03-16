@@ -8,10 +8,20 @@ export const SAMPLE_LG_FILE: LGFile = {
   generateRpgle: true,
   callers: [
     {
+      programName: `ROWS`,
+      niceName: `coolRows`,
+      bufferIn: [
+        { name: `id`, length: 10, decimals: 0 },
+      ],
+      rowOut: [
+        { name: `id`, length: 10, decimals: 0 },
+        { name: `name`, length: 10 },
+        { name: `coolness`, length: 10, decimals: 0 }
+      ]
+    },
+    {
       programName: `SIMPLE`,
-      programLibrary: `LIB`,
-      procedureName: `simple`,
-      procedureLibrary: `LIB`,
+      niceName: `simple`,
       bufferIn: [
         { name: `name`, length: 10 },
         { name: `coolness`, length: 10, decimals: 0 }
@@ -24,9 +34,7 @@ export const SAMPLE_LG_FILE: LGFile = {
     },
     {
       programName: `BOOLEAN`,
-      programLibrary: `LIB`,
-      procedureName: `boolean`,
-      procedureLibrary: `LIB`,
+      niceName: `boolean`,
       bufferIn: [
         {
           name: "name",
@@ -50,9 +58,7 @@ export const SAMPLE_LG_FILE: LGFile = {
     },
     {
       programName: `STRUCT`,
-      programLibrary: `LIB`,
-      procedureName: `struct`,
-      procedureLibrary: `LIB`,
+      niceName: `struct`,
       bufferIn: [
         {
           "name": "name",
@@ -122,9 +128,7 @@ export const SAMPLE_LG_FILE: LGFile = {
     },
     {
       programName: `ARRAY`,
-      programLibrary: `LIB`,
-      procedureName: `array`,
-      procedureLibrary: `LIB`,
+      niceName: `array`,
       bufferIn: [
         { name: `customerId`, length: 10, decimals: 0}
       ],

@@ -1,6 +1,6 @@
-import { ILEPrimitive, PrimitiveStruct, ProcedureCallInfo } from "../types";
+import { CallInfo, ILEPrimitive, PrimitiveStruct, ProcedureCallInfo } from "../types";
 
-export function generateRpgleFor(caller: ProcedureCallInfo) {
+export function generateRpgleFor(caller: CallInfo) {
   const lines: string[] = [
     `**free`,
     ``,
@@ -8,29 +8,49 @@ export function generateRpgleFor(caller: ProcedureCallInfo) {
     `// Generated at ${new Date().toISOString()}`,
     `// Source: logicgoose.json`,
     ``,
-  ]
+  ];
+
+  const hasResultSet = `rowOut` in caller && caller.rowOut;
 
   const inputStructName = `inputDs`;
   const outputStructName = `outputDs`;
+  const resultSetName = `resultSet`;
 
   const inputDsLines = generateStructsFor(inputStructName, caller.bufferIn);
-  const outputDsLines = generateStructsFor(outputStructName, caller.bufferOut);
-
   lines.push(...inputDsLines);
-  lines.push(...outputDsLines);
+
+  if (!hasResultSet && `bufferOut` in caller) {
+    const outputDsLines = generateStructsFor(outputStructName, caller.bufferOut);
+    lines.push(...outputDsLines);
+  }
 
   lines.push(``);
 
-  lines.push(`dcl-pi ${caller.procedureName};`);
+  lines.push(`dcl-pi ${caller.programName};`);
   lines.push(`  input likeds(${inputStructName});`);
-  lines.push(`  output likeds(${outputStructName});`);
+
+  if (!hasResultSet) {
+    lines.push(`  output likeds(${outputStructName});`);
+  }
+
   lines.push(`end-pi;`, ``);
 
-  lines.push(
-    `// Your logic goes here.`,
-    ``,
-    `return;`
-  )
+  if (hasResultSet && caller.rowOut) {
+    const resultSetLines = generateStructsFor(resultSetName, caller.rowOut);
+    lines.push(
+      ...resultSetLines,
+      `dcl-s resultCount int(10) inz(0);`, 
+      ``
+    );
+  }
+
+  lines.push(`// Your logic goes here.`, ``);
+
+  if (hasResultSet) {
+    lines.push(`exec sql set result sets array :${resultSetName} for :resultCount rows;`, ``);
+  }
+
+  lines.push(`return;`);
 
   return lines.join(`\n`);
 }

@@ -5,7 +5,20 @@
   "version": "0.2.0",
   "configurations": [
 		{
-			"name": "Debug rmake",
+			"name": "Generate sample and validate",
+			"type": "node",
+			"request": "launch",
+			"cwd": "${workspaceFolder}",
+			"program": "${workspaceFolder}/dist/index.js",
+			"sourceMaps": true,
+			"args": ["--cwd", "/Users/barry/Downloads/nodejs-ibmi-app", "--sample"],
+			"preLaunchTask": {
+				"type": "npm",
+				"script": "webpack:dev"
+			},
+		},
+		{
+			"name": "Generate scaffold from sample",
 			"type": "node",
 			"request": "launch",
 			"cwd": "${workspaceFolder}",

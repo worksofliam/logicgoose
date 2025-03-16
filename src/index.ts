@@ -82,8 +82,12 @@ async function main() {
     }
 
     if (settings.generateSql) {
-      const sql = settings.callers.map(c => generateSqlCreate(c)).join(`\n\n`);
-      writeFile(sql, `callers.sql`);
+      const needsProcs = settings.callers.filter(c => `bufferOut` in c);
+
+      if (needsProcs) {
+        const sql = needsProcs.filter(c => `bufferOut` in c).map(c => generateSqlCreate(c)).join(`\n\n`);
+        writeFile(sql, `callers.sql`);
+      }
     }
 
     if (settings.generateRpgle) {

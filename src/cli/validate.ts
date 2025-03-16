@@ -1,6 +1,6 @@
 //TODO: replace with json schema
 
-import { ILEPrimitive, LGFile, ProcedureCallInfo } from "../types";
+import { CallInfo, ILEPrimitive, LGFile, ProcedureCallInfo, ProgramCallInfo } from "../types";
 
 export function validateLGFile(obj: Partial<LGFile>) {
   if (typeof obj !== 'object' || obj === null) {
@@ -30,12 +30,20 @@ export function validateLGFile(obj: Partial<LGFile>) {
   return true;
 }
 
-function validateCallInfo(obj: Partial<ProcedureCallInfo>) {
+
+const baseRequirements: (keyof ProgramCallInfo)[] = ['niceName', 'programName', 'bufferIn'];
+const requiredProcedureFields: (keyof ProcedureCallInfo)[] = [`bufferOut`];
+const requiredProgramFields: (keyof ProgramCallInfo)[] = ['rowOut'];
+
+function validateCallInfo(obj: Partial<CallInfo>) {
   if (typeof obj !== 'object' || obj === null) {
     throw new Error(`Invalid input: Expected an object, but received ${typeof obj}`);
   }
 
-  const requiredFields = ['programName', 'programLibrary', 'bufferIn', 'bufferOut', 'procedureName', 'procedureLibrary'];
+  const isProgram = ('rowOut' in obj);
+
+  const requiredFields = isProgram ? [...baseRequirements, ...requiredProgramFields] : [...baseRequirements, ...requiredProcedureFields];
+  const bannedFields = isProgram ? requiredProcedureFields : requiredProgramFields;
 
   for (const field of requiredFields) {
     if (!(field in obj)) {
@@ -43,19 +51,42 @@ function validateCallInfo(obj: Partial<ProcedureCallInfo>) {
     }
   }
 
+  for (const field of bannedFields) {
+    if (field in obj) {
+      throw new Error(`Invalid input: '${field}' should not be present. This is a ${isProgram ? 'program' : 'procedure'} call.`);
+    }
+  }
+
   if (!Array.isArray(obj.bufferIn)) {
     throw new Error(`Invalid input: 'bufferIn' should be an array`);
-  }
-  if (!Array.isArray(obj.bufferOut)) {
-    throw new Error(`Invalid input: 'bufferOut' should be an array`);
   }
 
   for (const item of obj.bufferIn) {
     validateIlePrimitive(`${obj.programName}.${item.name}`, item)
   }
 
-  for (const item of obj.bufferOut) {
-    validateIlePrimitive(`${obj.programName}.${item.name}`, item)
+
+  if (isProgram && `rowOut` in obj) {
+    if (!Array.isArray(obj.rowOut)) {
+      throw new Error(`Invalid input: 'rowOut' should be an array`);
+    }
+
+    for (const item of obj.rowOut) {
+      if (`like` in item) {
+        throw new Error(`Invalid input: 'like' should not be present in 'rowOut' for ${obj.programName}. Rows can only have primitive types.`);  
+      }
+
+      validateIlePrimitive(`${obj.programName}.${item.name}`, item)
+    }
+
+  } else if ('bufferOut' in obj ) {
+    if (!Array.isArray(obj.bufferOut)) {
+      throw new Error(`Invalid input: 'bufferOut' should be an array`);
+    }
+
+    for (const item of obj.bufferOut) {
+      validateIlePrimitive(`${obj.programName}.${item.name}`, item)
+    }
   }
 
   return true;

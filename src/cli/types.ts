@@ -1,12 +1,19 @@
-import { ILEPrimitive, PrimitiveStruct, ProcedureCallInfo } from "../types";
+import { CallInfo, ILEPrimitive, PrimitiveStruct, ProcedureCallInfo } from "../types";
 
-export function generateTypesForCaller(caller: ProcedureCallInfo) {
+export function generateTypesForCaller(caller: CallInfo) {
   let lines: string[] = [];
 
-  const name = caller.procedureName.toLowerCase();
+  const name = caller.niceName;
 
   lines.push(...generateTypesFor(`${name}In`, caller.bufferIn));
-  lines.push(...generateTypesFor(`${name}Out`, caller.bufferOut));
+
+  if (`bufferOut` in caller) {
+    lines.push(...generateTypesFor(`${name}Out`, caller.bufferOut));
+  }
+
+  if (`rowOut` in caller && caller.rowOut) {
+    lines.push(...generateTypesFor(`${name}Out`, caller.rowOut));
+  }
 
   return lines.join(`\n`);
 }
@@ -19,11 +26,15 @@ export function generateTypesFor(name: string, items: PrimitiveStruct) {
 
   for (const item of items) {
     const type = getPrimitiveType(item);
-    lines.push(`  ${item.name}: ${type};`);
 
     if ('like' in item) {
-      const subType = generateTypesFor(item.name, item.like);
+      let subTypeName = `${name}_${item.name}`;
+      const subType = generateTypesFor(subTypeName, item.like);
       preLines.push(...subType);
+      lines.push(`  ${item.name}: ${subTypeName};`);
+      
+    } else {
+      lines.push(`  ${item.name}: ${type};`);
     }
   }
 
@@ -37,7 +48,7 @@ function getPrimitiveType(prim: ILEPrimitive) {
     if ('dim' in prim) {
       return `${prim.name}[]`;
     } else {
-      return `${prim.name};`;
+      return `${prim.name}`;
     }
   } else if ('length' in prim) {
     if ('decimals' in prim) {

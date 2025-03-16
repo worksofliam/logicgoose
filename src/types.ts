@@ -1,11 +1,17 @@
 
-export interface ProcedureCallInfo {
+export type CallInfo = ProgramCallInfo|ProcedureCallInfo;
+
+export interface ProgramCallInfo {
+  niceName: string;
   programName: string;
-  programLibrary: string;
+  bufferIn: ILEPrimitive[];
+  rowOut?: ILEPrimitive[];
+}
+
+export interface ProcedureCallInfo extends ProgramCallInfo {
   bufferIn: ILEPrimitive[];
   bufferOut: ILEPrimitive[];
-  procedureName: string;
-  procedureLibrary: string;
+  rowOut?: never;
 }
 
 export type PrimitiveStruct = ILEPrimitive[];
@@ -31,7 +37,7 @@ export interface ILEStruct extends ILEStructBase {
 
 export interface LGFile {
   generateIn?: string;
-  callers?: ProcedureCallInfo[];
+  callers?: CallInfo[];
   generateCaller?: boolean;
   generateTypes?: boolean;
   generateSql?: boolean;

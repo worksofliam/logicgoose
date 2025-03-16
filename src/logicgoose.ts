@@ -1,35 +1,54 @@
 import { ILEBuffer } from "./ileBuffer";
-import { ProcedureCallInfo } from "./types";
+import { CallInfo, ProcedureCallInfo } from "./types";
 
-export type StatementExecutor = (sql: string, parameters: string[]) => Promise<string|undefined>;
+export type StatementExecutor = (sql: string, parameters: string[], paramsOnly: boolean) => Promise<unknown[]|undefined>;
+type CallerResult = (inputObject: any) => Promise<any>;
 
 export interface LGSettings {
+  schema: string;
   executor: StatementExecutor;
 }
 
 export class LogicGoose {
   constructor(private config: LGSettings) {}
 
-  getCaller(procedure: ProcedureCallInfo) {
-    const input = procedure.bufferIn;
-    const output = procedure.bufferOut;
+  getCaller(callTo: CallInfo): CallerResult {
+    const input = callTo.bufferIn;
+    const isProgram = `rowOut` in callTo;
 
     // Use StrictInputType instead of InputType
-    const caller = async (inputObject: any): Promise<any> => {
+    const caller: CallerResult = async (inputObject: any): Promise<any> => {
       const inBuff = ILEBuffer.toBuffer(input, inputObject);
       
       // TODO: call procedure
 
-      const sql = `call ${procedure.procedureLibrary}.${procedure.procedureName} (?, ?)`;
+      let sql: string;
+      let result: unknown[]|undefined;
 
-      const result = await this.config.executor(sql, [inBuff, '']);
+      if (isProgram) {
+        sql = `call ${this.config.schema}.${callTo.niceName} (?)`;
+        result = await this.config.executor(sql, [inBuff], true);
+      } else {
+        sql = `call ${this.config.schema}.${callTo.niceName} (?, ?)`;
+        result = await this.config.executor(sql, [inBuff, ''], true);
+      }
 
       if (result) {
-        const outObject = ILEBuffer.fromBuffer(output, result);
+        if (isProgram && callTo.rowOut) {
+          return result;
 
-        return outObject;
+        } else if (`bufferOut` in callTo) {
+          if (result.length === 2 && typeof result[1] === 'string') {
+            const outObject = ILEBuffer.fromBuffer(callTo.bufferOut, result[1] as string);
+
+            return outObject;
+          } else {
+            throw new Error(`Procedure ${callTo.niceName} returned unexpected result. Expected two string columns in the result set, got length of ${result.length} and type ${typeof result[1]} for second parameter.`);
+          }
+        }
+
       } else {
-        throw new Error(`Procedure ${procedure.procedureName} failed to execute.`);
+        throw new Error(`Procedure ${callTo.niceName} failed to execute.`);
       }
     }
 
