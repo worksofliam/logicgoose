@@ -23,19 +23,32 @@ export class LogicGoose {
       // TODO: call procedure
 
       let sql: string;
-      let result: unknown[]|undefined;
+      let result: any[]|undefined;
 
       if (isProgram) {
-        sql = `call ${this.config.schema}.${callTo.niceName} (?)`;
-        result = await this.config.executor(sql, [inBuff], true);
+        sql = `call ${this.config.schema}.${callTo.programName.toUpperCase()}('${inBuff}')`;
+        result = await this.config.executor(sql, [], false);
       } else {
-        sql = `call ${this.config.schema}.${callTo.niceName} (?, ?)`;
+        sql = `call ${this.config.schema}.${callTo.niceName}(?, ?)`;
         result = await this.config.executor(sql, [inBuff, ''], true);
       }
 
       if (result) {
         if (isProgram && callTo.rowOut) {
-          return result;
+          const fixedRows: any[] = [];
+
+          // Because the columns always come back as uppercase, let's fix them
+          for (const row of result) {
+            const newRow = {};
+
+            for (const column of callTo.rowOut) {
+              newRow[column.name] = row[column.name.toUpperCase()];
+            }
+
+            fixedRows.push(newRow);
+          }
+
+          return fixedRows;
 
         } else if (`bufferOut` in callTo) {
           if (result.length === 2 && typeof result[1] === 'string') {
