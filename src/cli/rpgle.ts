@@ -36,7 +36,7 @@ export function generateRpgleFor(caller: CallInfo) {
   lines.push(`end-pi;`, ``);
 
   if (hasResultSet && caller.rowOut) {
-    const resultSetLines = generateStructsFor(resultSetName, caller.rowOut);
+    const resultSetLines = generateStructsFor(resultSetName, caller.rowOut, true);
     lines.push(
       ...resultSetLines,
       `dcl-s resultCount int(10) inz(0);`, 
@@ -55,11 +55,15 @@ export function generateRpgleFor(caller: CallInfo) {
   return lines.join(`\n`);
 }
 
-export function generateStructsFor(name: string, items: PrimitiveStruct) {
+export function generateStructsFor(name: string, items: PrimitiveStruct, isProgram?: boolean) {
   let preLines: string[] = [];
   let lines: string[] = [];
 
-  lines.push(`dcl-ds ${name} qualified template;`);
+  if (isProgram) {
+    lines.push(`dcl-ds ${name} qualified dim(50);`);
+  } else {
+    lines.push(`dcl-ds ${name} qualified template;`);
+  }
 
   for (const item of items) {
     const type = getRpgleType(item);
